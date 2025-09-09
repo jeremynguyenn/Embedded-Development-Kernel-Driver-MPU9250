@@ -1,0 +1,65 @@
+
+// mpu9250.dts
+// Device tree overlay for Raspberry Pi 4 to enable I2C, MPU9250, and AK8963 with power management.
+// Compile with: dtc -@ -I dts -O dtb -o mpu9250.dtbo mpu9250.dts
+// Load with: dtoverlay=mpu9250 in /boot/config.txt
+// Author: Nguyen Nhan
+/dts-v1/;
+/plugin/;
+
+/ {
+    compatible = "brcm,bcm2711";
+
+    fragment@0 {
+        target = <&i2c1>;
+        __overlay__ {
+            #address-cells = <1>;
+            #size-cells = <0>;
+            status = "okay";
+            clocks = <&clocks 1>; // I2C1 clock for bcm2711
+
+            mpu9250@68 {
+                compatible = "invensense,mpu9250";
+                reg = <0x68>; // I2C address 0x68 (AD0=0)
+                interrupt-parent = <&gpio>;
+                interrupts = <17 0x2>; // GPIO17, falling edge
+                pinctrl-names = "default";
+                pinctrl-0 = <&mpu9250_pins>;
+                vdd-supply = <&vdd_3v3_reg>; // Power management
+
+                magnetometer {
+                    compatible = "asahi-kasei,ak8963";
+                    reg = <0x0C>; // AK8963 I2C address
+                };
+            };
+        };
+    };
+
+    fragment@1 {
+        target = <&gpio>;
+        __overlay__ {
+            mpu9250_irq_pin {
+                brcm,pins = <17>;
+                brcm,function = <1>; // Input
+                brcm,pull = <2>; // Pull-up
+            };
+        };
+    };
+
+    fragment@2 {
+        target = <&pinctrl>;
+        __overlay__ {
+            mpu9250_pins: mpu9250_pins {
+                brcm,pins = <17>;
+                brcm,function = <1>; // Input
+                brcm,pull = <2>; // Pull-up
+            };
+        };
+    };
+
+    __overrides__ {
+        addr = <&mpu9250>,"reg:0";
+        irq_pin = <&mpu9250_irq_pin>,"brcm,pins:0";
+        i2c_bus = <&i2c1>,"status";
+    };
+};
