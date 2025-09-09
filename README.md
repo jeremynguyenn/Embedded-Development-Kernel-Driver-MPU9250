@@ -1,4 +1,5 @@
 # MPU9250 Kernel Driver for Raspberry Pi 4
+<img width="450" height="450" alt="image" src="https://github.com/user-attachments/assets/20eae71d-d3d9-429f-9ce2-44ac9b293618" /> <img width="450" height="450" alt="image" src="https://github.com/user-attachments/assets/7d9f4614-2586-400c-8892-bd5b0f2e63a9" />
 
 This project implements a Linux kernel driver and user-space test programs for the MPU9250 9-axis IMU sensor on the Raspberry Pi 4, interfacing via I2C. The driver supports both basic and advanced features, including the Industrial I/O (IIO) framework, asynchronous I/O (AIO), POSIX IPC, and enhanced reliability mechanisms. The codebase is designed for high performance, security, scalability, and reliability.
 
@@ -8,6 +9,8 @@ This section describes the foundational implementation of the MPU9250 kernel dri
 
 ### Overview
 The basic implementation includes a kernel module (`mpu9250_driver`) and a user-space test program (`user_space_test.c`) to interface with the MPU9250 sensor. It supports basic sensor operations (accelerometer, gyroscope, magnetometer, DMP) with features for process management, thread synchronization, and POSIX IPC.
+<img width="764" height="304" alt="image" src="https://github.com/user-attachments/assets/5fa6bfa0-ef26-4ba4-9010-f819f6c62212" />
+
 
 ### Key Features
 - **Device Tree Configuration (`mpu9250.dts`)**:
@@ -158,6 +161,7 @@ This section describes the advanced features and improvements made to the MPU925
 
 ### Overview
 The advanced implementation builds on the basic driver by integrating the IIO framework, AIO, POSIX shared memory, semaphores, and advanced reliability mechanisms. The updates ensure seamless integration with the new files and support high-performance, secure, scalable, and reliable sensor data acquisition.
+<img width="1733" height="884" alt="image" src="https://github.com/user-attachments/assets/bd8cd193-0704-49b5-bdff-b9610fd6e985" />
 
 ### Key Improvements
 - **Device Tree (`mpu9250.dts`)**:
@@ -261,6 +265,13 @@ The advanced implementation builds on the basic driver by integrating the IIO fr
   - Enhanced signal handling (`SIGINT`, `SIGTERM`, `SIGUSR1`, `SIGUSR2`, `SIGHUP`) for graceful shutdown and config reload.
 - **Dynamic Configuration**:
   - Supported runtime config updates via sysfs and `SIGHUP`.
+
+### Set up with Hardware-RaspberryPi
+I2C: <img width="740" height="526" alt="image" src="https://github.com/user-attachments/assets/0e147fc5-aa2a-4051-8224-d0a85fc891de" />
+
+<img width="1900" height="1239" alt="image" src="https://github.com/user-attachments/assets/0a7ff861-37e8-4f98-beb2-f0ca47cd6544" />
+
+<img width="1363" height="660" alt="image" src="https://github.com/user-attachments/assets/82c40eb2-8d17-454d-9679-1060b1b2a374" />
 
 ### Installation
 1. **Prerequisites**:
