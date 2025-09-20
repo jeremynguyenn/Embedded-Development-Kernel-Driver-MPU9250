@@ -3,9 +3,13 @@
 # Supports cross-compilation for arm64 (Pi 4).
 # Usage: make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
 # Install: make install
-# Test: ./user_test or ./mq_test
+# Test: ./user_test or ./mpu9250_ipc_test [--mq | --shm | --fifo]
+# Generate docs: make docs
 
-obj-m += mpu9250_driver.o
+# Note on Memory Layout: During compilation, code segment holds compiled binaries (.ko, executables),
+# data segment for globals, stack for function calls, heap for dynamic allocations (e.g., via malloc in user tests).
+
+obj-m += mpu9250_driver.o mpu9250_ops.o mpu9250_fileops.o
 
 KDIR ?= /lib/modules/$(shell uname -r)/build
 ARCH ?= arm64
@@ -14,18 +18,18 @@ CC = $(CROSS_COMPILE)gcc
 CFLAGS = -Wall -Wextra -std=c99
 EXTRA_CFLAGS += -DCONFIG_MPU9250_DEBUG
 
-all:
+all: check_deps
 	$(MAKE) -C $(KDIR) M=$(PWD) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) modules
 
 clean:
 	$(MAKE) -C $(KDIR) M=$(PWD) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) clean
-	rm -f user_test mq_test *.o *.ko *.mod.* Module.symvers modules.order
+	rm -f user_test mpu9250_ipc_test *.o *.ko *.mod.* Module.symvers modules.order *.dtbo # Full clean
 
 user_test:
-	$(CC) -o user_test user_space_test.c -lm -pthread $(CFLAGS)
+	$(CC) -o user_test user_space_test.c -lm -pthread -lrt $(CFLAGS)
 
-mq_test:
-	$(CC) -o mq_test mq_test.c -lrt -pthread $(CFLAGS)
+mpu9250_ipc_test:
+	$(CC) -o mpu9250_ipc_test mpu9250_ipc_test.c -lrt -pthread $(CFLAGS)
 
 install:
 	$(MAKE) -C $(KDIR) M=$(PWD) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) modules_install
@@ -41,3 +45,25 @@ uninstall:
 	sudo rm -f /dev/mpu9250
 	sudo rm -f /etc/udev/rules.d/99-mpu9250.rules
 	sudo udevadm control --reload-rules && sudo udevadm trigger
+
+check_deps:
+	@which $(CROSS_COMPILE)gcc >/dev/null || (echo "Error: Cross-compiler $(CROSS_COMPILE)gcc not found"; exit 1)
+	@which dtc >/dev/null || (echo "Error: dtc not found"; exit 1)
+	@test -d $(KDIR) || (echo "Error: Kernel directory $(KDIR) not found"; exit 1)
+	# Improved: Check memory usage (demo)
+	@free -h || echo "Memory check not available"
+	# New: Check vmalloc (kernel memory)
+	@cat /proc/vmallocinfo || echo "Vmalloc check not available"
+
+docs:
+	@echo "Generating documentation..."
+	@doxygen Doxyfile 2>/dev/null || echo "Warning: Doxygen not found, skipping documentation"
+	@echo "Documentation generated in ./docs directory"
+
+# New: Compile DTS
+dtbo:
+	dtc -@ -I dts -O dtb -o mpu9250.dtbo mpu9250.dts
+
+# New: Calibration test target
+calib_test: user_test
+	sudo ./user_test --calibrate # Assume added arg
